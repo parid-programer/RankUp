@@ -18,6 +18,12 @@ export default function Navbar() {
                 </Link>
             </div>
             <div className="flex-none gap-3">
+                <Link href="/daily" className="btn btn-primary btn-sm hidden md:inline-flex text-primary-content tracking-wide shadow-sm pulse-glow">
+                    Daily Challenge
+                </Link>
+                <Link href="/archive" className="btn btn-ghost btn-sm hidden md:inline-flex">
+                    Archive
+                </Link>
                 <Link
                     href="/leaderboard"
                     className="btn btn-ghost btn-sm hidden sm:inline-flex"
@@ -69,6 +75,9 @@ export default function Navbar() {
                                         {session.user?.rank || "Bronze"}
                                     </span>
                                 </Link>
+                            </li>
+                            <li>
+                                <Link href="/settings">Settings</Link>
                             </li>
                             <li>
                                 <button onClick={() => signOut()}>Logout</button>

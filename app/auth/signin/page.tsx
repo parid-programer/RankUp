@@ -7,6 +7,8 @@ import { BoltIcon } from "@/app/icons";
 export default function SignInPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [otp, setOtp] = useState("");
+    const [showOtp, setShowOtp] = useState(false);
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
 
@@ -18,13 +20,23 @@ export default function SignInPage() {
         const res = await signIn("credentials", {
             email,
             password,
-            redirect: true,
-            callbackUrl: "/",
+            otp,
+            redirect: false,
         });
 
         if (res?.error) {
-            setError(res.error);
+            if (res.error === "2FA_REQUIRED") {
+                setShowOtp(true);
+                setError("Please enter your Authenticator code.");
+            } else if (res.error === "2FA_EMAIL_REQUIRED") {
+                setShowOtp(true);
+                setError("A verification code was sent to your email.");
+            } else {
+                setError(res.error);
+            }
             setLoading(false);
+        } else if (res?.ok) {
+            window.location.href = "/";
         }
     };
 
@@ -79,39 +91,62 @@ export default function SignInPage() {
                 <div className="divider text-base-content/40 text-sm">OR</div>
 
                 <form onSubmit={handleSubmit} className="flex flex-col gap-5 mt-6">
-                    <div className="form-control">
-                        <input
-                            type="email"
-                            placeholder="Email address"
-                            className="input input-bordered w-full bg-base-200/50"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            required
-                        />
-                    </div>
-                    <div className="form-control">
-                        <input
-                            type="password"
-                            placeholder="Password"
-                            className="input input-bordered w-full bg-base-200/50"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                        />
-                    </div>
+                    {!showOtp ? (
+                        <>
+                            <div className="form-control">
+                                <input
+                                    type="email"
+                                    placeholder="Email address"
+                                    className="input input-bordered w-full bg-base-200/50"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    required
+                                />
+                            </div>
+                            <div className="form-control">
+                                <input
+                                    type="password"
+                                    placeholder="Password"
+                                    className="input input-bordered w-full bg-base-200/50"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    required
+                                />
+                            </div>
+                        </>
+                    ) : (
+                        <div className="form-control">
+                            <label className="label text-sm font-bold text-base-content/70">Authenticator Code</label>
+                            <input
+                                type="text"
+                                placeholder="000 000"
+                                className="input input-bordered w-full bg-base-200/50 text-center tracking-widest text-2xl"
+                                value={otp}
+                                onChange={(e) => setOtp(e.target.value)}
+                                maxLength={6}
+                                required
+                            />
+                        </div>
+                    )}
 
                     {error && <div className="text-error text-sm font-bold text-center mt-2">{error}</div>}
 
                     <button type="submit" disabled={loading} className="btn btn-primary mt-2">
                         {loading ? <span className="loading loading-spinner"></span> : "Sign In with Email"}
                     </button>
+
+                    <div className="text-center mt-2">
+                        <a href="/auth/forgot-password" className="text-sm text-base-content/60 hover:text-primary transition-colors">
+                            Forgot your password?
+                        </a>
+                    </div>
                 </form>
 
                 <p className="text-center text-sm text-base-content/60 mt-8">
                     Don&apos;t have an account?{" "}
-                    <span className="text-primary font-bold cursor-pointer hover:underline">
-                        Sign up (Demo)
-                    </span>
+                    <a href="/auth/signup" className="text-primary font-bold cursor-pointer hover:underline">
+                        Sign Up
+                    </a>
                 </p>
             </div>
         </div>
