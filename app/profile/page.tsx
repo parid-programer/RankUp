@@ -94,39 +94,73 @@ export default function ProfilePage() {
     // IMAGE UPLOAD LOGIC ==============================
 
     const uploadImage = async (file: File) => {
-        // Ensure file is less than 2MB
-        if (file.size > 2 * 1024 * 1024) {
-            alert("Image must be smaller than 2MB.");
+        // Ensure file is less than 5MB max before processing
+        if (file.size > 5 * 1024 * 1024) {
+            alert("Image must be smaller than 5MB to be processed.");
             return;
         }
 
         setIsUploadingImage(true);
         const reader = new FileReader();
         reader.onloadend = async () => {
-            const base64String = reader.result as string;
-            try {
-                const res = await fetch("/api/user/settings", {
-                    method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        action: "updateProfile",
-                        image: base64String,
-                        bio: session.user.bio,
-                        customStatus: session.user.customStatus,
-                        presence: session.user.presence
-                    }),
-                });
-                if (res.ok) {
-                    await update({ image: base64String });
+            const img = new Image();
+            img.src = reader.result as string;
+
+            img.onload = async () => {
+                const canvas = document.createElement("canvas");
+                let width = img.width;
+                let height = img.height;
+                const maxDim = 512; // Force to 512px max
+
+                if (width > height) {
+                    if (width > maxDim) {
+                        height = Math.round((height * maxDim) / width);
+                        width = maxDim;
+                    }
                 } else {
-                    alert("Failed to update profile picture.");
+                    if (height > maxDim) {
+                        width = Math.round((width * maxDim) / height);
+                        height = maxDim;
+                    }
                 }
-            } catch (e) {
-                console.error("Upload failed", e);
-                alert("An error occurred during upload.");
-            } finally {
-                setIsUploadingImage(false);
-            }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext("2d");
+
+                if (ctx) {
+                    ctx.drawImage(img, 0, 0, width, height);
+                    // Output as JPEG with 0.8 quality
+                    const base64String = canvas.toDataURL("image/jpeg", 0.8);
+
+                    try {
+                        const res = await fetch("/api/user/settings", {
+                            method: "PATCH",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                action: "updateProfile",
+                                image: base64String,
+                                bio: session.user.bio,
+                                customStatus: session.user.customStatus,
+                                presence: session.user.presence
+                            }),
+                        });
+                        if (res.ok) {
+                            await update({ image: base64String });
+                        } else {
+                            alert("Failed to update profile picture.");
+                        }
+                    } catch (e) {
+                        console.error("Upload failed", e);
+                        alert("An error occurred during upload.");
+                    } finally {
+                        setIsUploadingImage(false);
+                    }
+                } else {
+                    setIsUploadingImage(false);
+                    alert("Canvas rendering failed.");
+                }
+            };
         };
         reader.readAsDataURL(file);
     }

@@ -50,15 +50,44 @@ export default function SettingsPage() {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        // Ensure file is less than 2MB
-        if (file.size > 2 * 1024 * 1024) {
-            setMessage("Image must be smaller than 2MB.");
+        // Ensure file is less than 5MB max before processing
+        if (file.size > 5 * 1024 * 1024) {
+            setMessage("Image must be smaller than 5MB to be processed.");
             return;
         }
 
         const reader = new FileReader();
         reader.onloadend = () => {
-            setImage(reader.result as string);
+            const img = new Image();
+            img.src = reader.result as string;
+            img.onload = () => {
+                const canvas = document.createElement("canvas");
+                let width = img.width;
+                let height = img.height;
+                const maxDim = 512; // Force to 512px max
+
+                if (width > height) {
+                    if (width > maxDim) {
+                        height = Math.round((height * maxDim) / width);
+                        width = maxDim;
+                    }
+                } else {
+                    if (height > maxDim) {
+                        width = Math.round((width * maxDim) / height);
+                        height = maxDim;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext("2d");
+                if (ctx) {
+                    ctx.drawImage(img, 0, 0, width, height);
+                    // Output as JPEG with 0.8 quality to seriously save database space
+                    const compressedBase64 = canvas.toDataURL("image/jpeg", 0.8);
+                    setImage(compressedBase64);
+                }
+            };
         }
         reader.readAsDataURL(file);
     };
@@ -263,7 +292,7 @@ export default function SettingsPage() {
                         <div className="flex flex-col flex-1 gap-2 w-full">
                             <label className="label font-bold py-0">Custom Profile Picture</label>
                             <input type="file" className="file-input file-input-bordered w-full max-w-xs bg-base-200" accept="image/png, image/jpeg, image/jpg" onChange={handleImageUpload} />
-                            <span className="text-xs opacity-50">Upload a PNG or JPG up to 2MB</span>
+                            <span className="text-xs opacity-50">Upload a PNG or JPG up to 5MB (Will be compressed to 512px)</span>
                         </div>
                     </div>
 

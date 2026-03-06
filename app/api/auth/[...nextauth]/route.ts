@@ -161,6 +161,15 @@ export const authOptions: NextAuthOptions = {
                     token.presence = dbUser.presence;
                     token.email2faEnabled = dbUser.email2faEnabled;
                     token.twoFactorEnabled = dbUser.twoFactorEnabled;
+
+                    if (dbUser.image && dbUser.image.startsWith("data:")) {
+                        // Crucially, never pass 2MB base64 JSON directly into a secure JWT!
+                        // This allows the cache to gracefully bust via Unix Timestamps whenever an update is executed upstream.
+                        const v = dbUser.updatedAt ? new Date(dbUser.updatedAt).getTime() : Date.now();
+                        token.image = `/api/user/avatar/${dbUser._id.toString()}?v=${v}`;
+                    } else if (dbUser.image) {
+                        token.image = dbUser.image;
+                    }
                 }
             }
 

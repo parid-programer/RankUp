@@ -37,6 +37,8 @@ const stats = [
 // An app that will test a user and assign a score to them. There will be a leaderboard and a gamified system of ranks. Integrate tailwindcss and daisyui for styling. Make a /test page where the actual test is held. Use the chatgpt api to make questions. Depending on how many questions you get right, the next questions will be harder. If you get a question wrong, you lose points. If you get a question right, you gain points. Make a time limit. Integrate MongoDB to keep track of user scores and ranks and auth. Make a login page with JWT authentication and google and facebook authentication. Give it an about page, say stuff like its used all around the world, give it a reviews section and a contact me page which send emails to my email address. Make it look good. Give it a logo. 
 
 /* ───────── page ───────── */
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
   await dbConnect();
   const topUsers = await User.find({ xp: { $gt: 0 } })
@@ -127,8 +129,12 @@ export default async function HomePage() {
                     <td>
                       <Link href={`/profile/${p._id.toString()}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
                         <div className="avatar placeholder">
-                          <div className="bg-primary/15 text-primary w-10 rounded-full text-sm font-bold overflow-hidden">
-                            {p.image ? <img src={p.image} referrerPolicy="no-referrer" /> : <span>{p.name?.[0]?.toUpperCase() || "U"}</span>}
+                          <div className="bg-primary/15 text-primary w-10 h-10 rounded-full text-sm font-bold overflow-hidden">
+                            {p.image ? (
+                              <img src={p.image.startsWith("data:") ? `/api/user/avatar/${p._id.toString()}` : p.image} referrerPolicy="no-referrer" className="object-cover w-full h-full" />
+                            ) : (
+                              <span>{p.name?.[0]?.toUpperCase() || "U"}</span>
+                            )}
                           </div>
                         </div>
                         <span className="font-semibold hover:underline text-primary">{p.name}</span>
