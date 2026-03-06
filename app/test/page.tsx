@@ -142,10 +142,18 @@ export default function TestPage() {
     const endTest = async () => {
         setIsTestActive(false);
         setQuestion(null);
-        if (pendingTimeDeduction > 0) {
-            submitXPDelta(-pendingTimeDeduction);
-            setPendingTimeDeduction(0);
+
+        let finalDelta = -pendingTimeDeduction;
+
+        // Timeout Refund: if we expire linearly on a question without answering, refund the upfront stealth-penalty.
+        if (selectedAnswer === null && currentPenalty > 0) {
+            finalDelta += currentPenalty;
         }
+
+        if (finalDelta !== 0) {
+            submitXPDelta(finalDelta);
+        }
+        setPendingTimeDeduction(0);
     };
 
     const handleAnswerClick = (index: number) => {
