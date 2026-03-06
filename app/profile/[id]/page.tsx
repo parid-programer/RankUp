@@ -8,8 +8,10 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
     const resolvedParams = await params;
 
     let user;
+    let subjects = {};
     try {
         user = await User.findById(resolvedParams.id).lean();
+        subjects = user?.subjects || {};
     } catch {
         return notFound();
     }
@@ -59,6 +61,27 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
                         <div className="stat-value text-primary text-3xl">{user.matchesPlayed || "0"}</div>
                     </div>
                 </div>
+
+                {Object.keys(subjects).length > 0 && (
+                    <div className="w-full mt-8 max-w-2xl">
+                        <h3 className="text-xl font-bold mb-4 text-center">Subject Proficiency</h3>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            {Object.entries(subjects).map(([subjectName, data]: [string, any]) => (
+                                <div key={subjectName} className="bg-base-300/50 border border-base-content/10 p-4 rounded-xl text-center shadow-sm">
+                                    <h4 className="font-bold text-sm mb-1">{subjectName}</h4>
+                                    <div className="flex flex-col gap-1 items-center justify-center">
+                                        <span className={`badge badge-sm font-bold opacity-90 ${data.rank === "Grandmaster" ? "bg-gradient-to-r from-rose-400 to-pink-600 text-white border-none" :
+                                                data.rank === "Master" ? "bg-gradient-to-r from-purple-400 to-fuchsia-500 text-white border-none" :
+                                                    data.rank === "Diamond" ? "bg-gradient-to-r from-cyan-300 to-teal-500 text-white border-none" :
+                                                        "badge-neutral"
+                                            }`}>{data.rank}</span>
+                                        <span className="text-xs text-secondary font-mono">{data.xp.toLocaleString()} XP</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Initialize the recursively rendering Social engine targetted at user's specific profile ID */}

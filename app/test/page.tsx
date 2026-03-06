@@ -13,7 +13,7 @@ type Question = {
 };
 
 export default function TestPage() {
-    const { status } = useSession();
+    const { data: sessionData, status } = useSession();
     const router = useRouter();
 
     const [loading, setLoading] = useState(false);
@@ -22,7 +22,9 @@ export default function TestPage() {
     const [score, setScore] = useState(0);
     const [streak, setStreak] = useState(0);
     const [timeLeft, setTimeLeft] = useState(60);
+    const [duration, setDuration] = useState(60);
     const [isTestActive, setIsTestActive] = useState(false);
+    const [subject, setSubject] = useState("General");
     const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
     const [feedback, setFeedback] = useState<"correct" | "incorrect" | null>(null);
 
@@ -40,7 +42,7 @@ export default function TestPage() {
             const res = await fetch("/api/questions", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ difficulty: currentDifficulty }),
+                body: JSON.stringify({ difficulty: currentDifficulty, subject }),
             });
             const data = await res.json();
             if (res.ok) setQuestion(data);
@@ -53,25 +55,37 @@ export default function TestPage() {
     };
 
     const startTest = () => {
+        // Compute base difficulty dynamically from the user's Total XP (fallback to 0) Max 10.
+        const baseXP = (sessionData?.user as any)?.xp || 0;
+        const startingLevel = Math.max(1, Math.min(10, Math.floor(baseXP / 1000) + 1));
+
         setIsTestActive(true);
         setScore(0);
-        setDifficulty(1);
-        setTimeLeft(60);
+        setDifficulty(startingLevel);
+        setTimeLeft(duration);
         setStreak(0);
-        fetchQuestion(1);
+        fetchQuestion(startingLevel);
+    };
+
+    const handleNextQuestion = () => {
+        const nextDifficulty = feedback === "correct"
+            ? Math.min(10, difficulty + 1)
+            : Math.max(1, Math.min(10, Math.floor(((sessionData?.user as any)?.xp || 0) / 1000) + 1));
+
+        fetchQuestion(nextDifficulty);
     };
 
     const endTest = async () => {
         setIsTestActive(false);
         setQuestion(null);
 
-        // Submit score
-        if (score > 0) {
+        // Submit score (both positive OR negative allowing demotions)
+        if (score !== 0) {
             try {
                 await fetch("/api/test/submit", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ xpChange: score }),
+                    body: JSON.stringify({ xpChange: score, subject }),
                 });
             } catch (e) {
                 console.error("Failed to submit score", e);
@@ -91,22 +105,18 @@ export default function TestPage() {
             setScore((prev) => prev + Math.round(pointsEarned));
             setStreak((prev) => prev + 1);
             setDifficulty((prev) => Math.min(10, prev + 1));
-
-            setTimeout(() => fetchQuestion(Math.min(10, difficulty + 1)), 2000);
         } else {
             setFeedback("incorrect");
-            const pointsLost = 5 * difficulty; // penalty
-            setScore((prev) => Math.max(0, prev - pointsLost));
+            const pointsLost = 10 * difficulty; // penalty
+            setScore((prev) => prev - pointsLost); // Allow negative absolute score cascade
             setStreak(0);
             setDifficulty((prev) => Math.max(1, prev - 1));
-
-            setTimeout(() => fetchQuestion(Math.max(1, difficulty - 1)), 3500);
         }
     };
 
     useEffect(() => {
         let timer: NodeJS.Timeout;
-        if (isTestActive && timeLeft > 0 && !feedback) {
+        if (isTestActive && timeLeft > 0 && !feedback && !loading) {
             timer = setInterval(() => setTimeLeft((prev) => prev - 1), 1000);
         } else if (timeLeft === 0 && isTestActive) {
             endTest();
@@ -121,6 +131,7 @@ export default function TestPage() {
             </div>
         );
     }
+
 
     return (
         <div className="min-h-screen pt-10 pb-20 px-4 md:px-8 max-w-4xl mx-auto">
@@ -151,11 +162,34 @@ export default function TestPage() {
                         Answer rapidly scaling AI-generated questions. Get them right to
                         increase difficulty and earn multipliers. Get them wrong, lose points.
                     </p>
+
+                    <div className="flex flex-col sm:flex-row gap-4 max-w-lg mx-auto mb-8 text-left">
+                        <div className="flex-1">
+                            <label className="label font-bold">Select Category</label>
+                            <select className="select select-bordered w-full bg-base-200" value={subject} onChange={e => setSubject(e.target.value)}>
+                                <option value="General">🌐 General</option>
+                                <option value="Mathematics">📐 Mathematics</option>
+                                <option value="Science">🔬 Science</option>
+                                <option value="History">🏛️ History</option>
+                                <option value="Geography">🌍 Geography</option>
+                                <option value="Computer Science">💻 Computer Science</option>
+                            </select>
+                        </div>
+                        <div className="flex-1">
+                            <label className="label font-bold">Duration</label>
+                            <select className="select select-bordered w-full bg-base-200" value={duration} onChange={e => setDuration(Number(e.target.value))}>
+                                <option value={60}>⏱️ 1 Minute (60s)</option>
+                                <option value={180}>⏱️ 3 Minutes (180s)</option>
+                                <option value={300}>⏱️ 5 Minutes (300s)</option>
+                            </select>
+                        </div>
+                    </div>
+
                     <button
                         onClick={startTest}
                         className="btn btn-primary btn-lg pulse-glow"
                     >
-                        Start Session (60s)
+                        Start {subject} Session ({duration}s)
                     </button>
                 </div>
             ) : (
@@ -185,6 +219,7 @@ export default function TestPage() {
                             >
                                 <div className="flex justify-between items-center mb-6">
                                     <span className="badge badge-outline">Lvl {difficulty}</span>
+                                    <span className="badge badge-primary badge-outline">{subject !== "General" ? subject : "General Knowledge"}</span>
                                 </div>
 
                                 <h2 className="text-2xl md:text-3xl font-bold mb-8 leading-tight">
@@ -233,6 +268,9 @@ export default function TestPage() {
                                             {feedback === "correct" ? "Correct!" : "Incorrect."}
                                         </p>
                                         <p>{question.explanation}</p>
+                                        <button className="btn btn-sm btn-ghost w-full mt-4 font-bold border border-base-content/20 bg-base-100 hover:bg-base-200 shadow-sm" onClick={handleNextQuestion}>
+                                            Continue
+                                        </button>
                                     </motion.div>
                                 )}
                             </motion.div>

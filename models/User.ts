@@ -38,6 +38,27 @@ const UserSchema = new mongoose.Schema(
             type: Number,
             default: 0,
         },
+        subjects: {
+            type: Map,
+            of: new mongoose.Schema({
+                xp: { type: Number, default: 0 },
+                rank: {
+                    type: String,
+                    enum: [
+                        "Bronze",
+                        "Silver",
+                        "Gold",
+                        "Platinum",
+                        "Diamond",
+                        "Master",
+                        "Grandmaster",
+                    ],
+                    default: "Bronze",
+                },
+                matchesPlayed: { type: Number, default: 0 },
+            }, { _id: false }),
+            default: {},
+        },
         bio: {
             type: String,
             maxlength: 250,

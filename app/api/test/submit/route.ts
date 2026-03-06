@@ -32,7 +32,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const { xpChange } = await req.json();
+        const { xpChange, subject } = await req.json();
 
         if (typeof xpChange !== "number") {
             return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
@@ -47,22 +47,45 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "User not found" }, { status: 404 });
         }
 
-        // Update XP (ensure it doesn't go below 0)
-        user.xp = Math.max(0, user.xp + xpChange);
-        user.matchesPlayed += 1;
+        let newXp = 0;
+        let newRank = "Bronze";
+        let rankChanged = false;
 
-        // Recalculate Rank
-        const newRank = calculateRank(user.xp);
-        const rankChanged = user.rank !== newRank;
+        const isGeneral = !subject || subject === "General";
 
-        user.rank = newRank;
+        if (isGeneral) {
+            // Update Global XP
+            user.xp = Math.max(0, user.xp + xpChange);
+            user.matchesPlayed += 1;
+
+            newRank = calculateRank(user.xp);
+            rankChanged = user.rank !== newRank;
+            user.rank = newRank;
+            newXp = user.xp;
+        } else {
+            // Update Subject XP
+            const currentSubject = user.subjects?.get(subject) || { xp: 0, rank: "Bronze", matchesPlayed: 0 };
+
+            const subjectXp = Math.max(0, currentSubject.xp + xpChange);
+            const subjectMatches = currentSubject.matchesPlayed + 1;
+
+            newRank = calculateRank(subjectXp);
+            rankChanged = currentSubject.rank !== newRank;
+
+            user.subjects.set(subject, {
+                xp: subjectXp,
+                rank: newRank,
+                matchesPlayed: subjectMatches
+            });
+            newXp = subjectXp;
+        }
 
         await user.save();
 
         return NextResponse.json({
             success: true,
-            newXp: user.xp,
-            newRank: user.rank,
+            newXp,
+            newRank,
             rankChanged,
         });
     } catch (error: unknown) {

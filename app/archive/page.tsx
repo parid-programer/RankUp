@@ -11,7 +11,7 @@ export default async function ArchiveList() {
 
     const questions = await QuestionRecord.find({
         isDaily: true,
-        activeDate: { $lt: today }
+        activeDate: { $lte: today }
     }).sort({ activeDate: -1 }).lean();
 
     return (

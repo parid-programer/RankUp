@@ -4,15 +4,35 @@ import User from "@/models/User";
 
 export const dynamic = "force-dynamic";
 
-export default async function LeaderboardPage() {
+export default async function LeaderboardPage({ searchParams }: { searchParams: Promise<{ subject?: string }> }) {
     await dbConnect();
+    const resolvedParams = await searchParams;
+    const activeSubject = resolvedParams.subject || "General";
 
-    // Fetch top 50 users sorted by XP descending
-    const topUsers = await User.find({})
-        .sort({ xp: -1 })
-        .limit(50)
-        .select("name image rank xp matchesPlayed")
-        .lean();
+    let topUsers = [];
+
+    if (activeSubject === "General") {
+        // Fetch top 50 users sorted by Global XP descending
+        topUsers = await User.find({ xp: { $gt: 0 } })
+            .sort({ xp: -1 })
+            .limit(50)
+            .select("name image rank xp matchesPlayed")
+            .lean();
+    } else {
+        // Fetch top 50 users sorted by Specific Subject XP descending
+        const sortField = `subjects.${activeSubject}.xp`;
+        topUsers = await User.find({ [sortField]: { $gt: 0 } })
+            .sort({ [sortField]: -1 })
+            .limit(50)
+            .select(`name image subjects.${activeSubject}`)
+            .lean()
+            .then(users => users.map((u: any) => ({
+                ...u,
+                rank: u.subjects?.[activeSubject]?.rank || "Bronze",
+                xp: u.subjects?.[activeSubject]?.xp || 0,
+                matchesPlayed: u.subjects?.[activeSubject]?.matchesPlayed || 0
+            })));
+    }
 
     return (
         <div className="min-h-screen py-20 px-6 max-w-5xl mx-auto">
@@ -25,6 +45,24 @@ export default async function LeaderboardPage() {
                     The top 50 sharpest minds on RankUp. Play tests, earn XP, and secure
                     your place among the Grandmasters.
                 </p>
+
+                <div className="flex justify-center mt-8">
+                    <form className="join">
+                        <select
+                            name="subject"
+                            className="select select-bordered select-md join-item bg-base-200 font-bold"
+                            defaultValue={activeSubject}
+                        >
+                            <option value="General">General</option>
+                            <option value="Mathematics">Mathematics</option>
+                            <option value="Science">Science</option>
+                            <option value="History">History</option>
+                            <option value="Geography">Geography</option>
+                            <option value="Computer Science">Computer Science</option>
+                        </select>
+                        <button type="submit" className="btn btn-primary join-item">Filter Category</button>
+                    </form>
+                </div>
             </div>
 
             <div className="glass-card rounded-3xl overflow-hidden shadow-2xl relative">

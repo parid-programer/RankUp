@@ -13,10 +13,6 @@ export const authOptions: NextAuthOptions = {
             clientId: (process.env.GOOGLE_CLIENT_ID || "mock-google-id") as string,
             clientSecret: (process.env.GOOGLE_CLIENT_SECRET || "mock-google-secret") as string,
         }),
-        FacebookProvider({
-            clientId: (process.env.FACEBOOK_CLIENT_ID || "mock-facebook-id") as string,
-            clientSecret: (process.env.FACEBOOK_CLIENT_SECRET || "mock-facebook-secret") as string,
-        }),
         CredentialsProvider({
             name: "Email and Password",
             credentials: {

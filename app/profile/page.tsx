@@ -1,6 +1,8 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import CommentSection from "@/components/CommentSection";
+import dbConnect from "@/lib/mongodb";
+import User from "@/models/User";
 import { redirect } from "next/navigation";
 
 export default async function ProfilePage() {
@@ -9,6 +11,11 @@ export default async function ProfilePage() {
     if (!session?.user) {
         redirect("/api/auth/signin");
     }
+
+    await dbConnect();
+
+    const dbUser = await User.findById(session.user.id).lean();
+    const subjects = dbUser?.subjects || {};
 
     return (
         <div className="min-h-screen pt-24 pb-20 px-4 md:px-8 max-w-4xl mx-auto">
@@ -48,14 +55,35 @@ export default async function ProfilePage() {
                 <div className="stats shadow bg-base-200/50 w-full mt-4">
                     <div className="stat place-items-center">
                         <div className="stat-title text-base-content/50">Current Rank</div>
-                        <div className="stat-value text-primary text-2xl">{session.user.rank || "Bronze"}</div>
+                        <div className="stat-value text-primary text-2xl">{dbUser?.rank || "Bronze"}</div>
                     </div>
 
                     <div className="stat place-items-center">
                         <div className="stat-title text-base-content/50">Total XP</div>
-                        <div className="stat-value text-secondary text-2xl">{session.user.xp?.toLocaleString() || "0"}</div>
+                        <div className="stat-value text-secondary text-2xl">{dbUser?.xp?.toLocaleString() || "0"}</div>
                     </div>
                 </div>
+
+                {Object.keys(subjects).length > 0 && (
+                    <div className="w-full mt-6">
+                        <h3 className="text-xl font-bold mb-4 text-center">Subject Proficiency</h3>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            {Object.entries(subjects).map(([subjectName, data]: [string, any]) => (
+                                <div key={subjectName} className="bg-base-300/50 border border-base-content/10 p-4 rounded-xl text-center shadow-sm">
+                                    <h4 className="font-bold text-sm mb-1">{subjectName}</h4>
+                                    <div className="flex flex-col gap-1 items-center justify-center">
+                                        <span className={`badge badge-sm font-bold opacity-90 ${data.rank === "Grandmaster" ? "bg-gradient-to-r from-rose-400 to-pink-600 text-white border-none" :
+                                            data.rank === "Master" ? "bg-gradient-to-r from-purple-400 to-fuchsia-500 text-white border-none" :
+                                                data.rank === "Diamond" ? "bg-gradient-to-r from-cyan-300 to-teal-500 text-white border-none" :
+                                                    "badge-neutral"
+                                            }`}>{data.rank}</span>
+                                        <span className="text-xs text-secondary font-mono">{data.xp.toLocaleString()} XP</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
 
             <div className="mt-8 mb-4">
