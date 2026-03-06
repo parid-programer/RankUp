@@ -54,7 +54,7 @@ export default function TestPage() {
                 setQuestion(data);
                 const penalty = 10 * currentDifficulty;
                 setCurrentPenalty(penalty);
-                setScore((prev) => prev - penalty);
+                // Do NOT subtract from visual score: setScore((prev) => prev - penalty);
                 submitXPDelta(-penalty);
                 setPendingTimeDeduction(0);
             }
@@ -115,7 +115,7 @@ export default function TestPage() {
                     setQuestion(data);
                     const penalty = 10 * difficulty;
                     setCurrentPenalty(penalty);
-                    setScore((prev) => prev - penalty);
+                    // Do NOT subtract from visual score: setScore((prev) => prev - penalty);
                     submitXPDelta(-penalty);
                     setPendingTimeDeduction(0);
                 } else {
@@ -161,7 +161,7 @@ export default function TestPage() {
             const pointsEarned = Math.round(10 * difficulty * (1 + streak * 0.1));
             const netPoints = currentPenalty + pointsEarned - pendingTimeDeduction;
 
-            setScore((prev) => prev + currentPenalty + pointsEarned);
+            setScore((prev) => prev + pointsEarned - pendingTimeDeduction);
             setStreak((prev) => prev + 1);
 
             nextDiff = Math.min(10, difficulty + 1);
@@ -171,6 +171,7 @@ export default function TestPage() {
         } else {
             setFeedback("incorrect");
             // Penalty was paid immediately entirely upfront!
+            setScore((prev) => prev - currentPenalty - pendingTimeDeduction);
             setStreak(0);
 
             nextDiff = Math.max(1, difficulty - 1);
