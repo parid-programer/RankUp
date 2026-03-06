@@ -11,7 +11,7 @@ const openai = new OpenAI({
 
 const questionSchema = z.object({
     question: z.string(),
-    options: z.array(z.string()),
+    options: z.array(z.string()).length(4),
     correctAnswerIndex: z.number(),
     explanation: z.string(),
 });
