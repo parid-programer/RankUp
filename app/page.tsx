@@ -67,7 +67,7 @@ export default async function HomePage() {
 
           <p className="text-base-content/60 max-w-xl text-lg">
             Take skill-based tests, earn points, and compete on a global
-            leaderboard. Rise through seven tiers — from Bronze to Grandmaster.
+            leaderboard. Rise through seven tiers; from Bronze to Grandmaster.
           </p>
 
           <div className="flex gap-3 mt-2">
@@ -247,8 +247,7 @@ export default async function HomePage() {
               Ready to prove yourself?
             </h2>
             <p className="text-base-content/50 max-w-md">
-              Join thousands of players competing for the top spot. Your first
-              test is free — no sign-up required.
+              Join thousands of players competing for the top spot.
             </p>
             <Link href="/test" className="btn btn-primary btn-lg mt-2 pulse-glow gap-2">
               Start Now <ArrowRightIcon className="h-5 w-5" />

@@ -41,10 +41,9 @@ export async function POST(req: Request) {
                 {
                     role: "system",
                     content: `You are a strict, highly intelligent quiz master generating multiple-choice questions for a competitive gamified platform. 
-The user is currently at difficulty level ${difficulty} out of 10. 
-The required subject for this question is: ${targetSubject}.
+The user is currently at difficulty level ${difficulty} out of 10. The required subject for this question is: ${targetSubject}. Don't make the questions too cliche${targetSubject === 'General Knowledge' && ', generalize the questions, don\'t ask just STEM, mix in a bit of history, geography etc; and definitely'} Don\'t ask anything related to what the planet with the largest number of moons is
 Generate a ${targetSubject} question appropriate for this difficulty. 
-Level 1 should be fundamental. Level 10 should be highly specific, expert-level trivia or complex problem-solving. The questions should be only in English (excluding Proper Nouns, Names of people, places, theorems or organizations which may be borrowed from other languages)
+Level 1 should be fundamental. Level 10 should be highly specific, expert-level trivia or complex problem-solving. The questions should be only in English (excluding Proper Nouns, Names of people, places, theorems or organizations which may be borrowed from other languages). Don't put the index of the answer e.g "a)" or "a." or anything like that in the answer.
 `,
                 },
             ],

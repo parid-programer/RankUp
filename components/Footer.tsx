@@ -13,6 +13,8 @@ export default function Footer() {
                     RankUp Gamified Testing Ltd.
                     <br />
                     Proving global knowledge since 2026.
+                    <br />
+                    Made by Parid Haxholli, Rion Jashari and Ensar Dragusha
                 </p>
             </aside>
             <nav>

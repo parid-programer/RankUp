@@ -28,6 +28,9 @@ export default function TestPage() {
     const [streak, setStreak] = useState(0);
     const [timeLeft, setTimeLeft] = useState(60);
     const [duration, setDuration] = useState(60);
+    const [durationMode, setDurationMode] = useState<"preset" | "custom">("preset");
+    const [customMinutes, setCustomMinutes] = useState(1);
+    const [customSeconds, setCustomSeconds] = useState(0);
     const [isTestActive, setIsTestActive] = useState(false);
     const [subject, setSubject] = useState("General");
     const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
@@ -67,6 +70,11 @@ export default function TestPage() {
     };
 
     const startTest = async () => {
+        if (duration < 30) {
+            alert("Test duration must be at least 30 seconds.");
+            return;
+        }
+
         setLoading(true);
         setIsTestActive(true);
 
@@ -142,18 +150,10 @@ export default function TestPage() {
     const endTest = async () => {
         setIsTestActive(false);
         setQuestion(null);
-
-        let finalDelta = -pendingTimeDeduction;
-
-        // Timeout Refund: if we expire linearly on a question without answering, refund the upfront stealth-penalty.
-        if (selectedAnswer === null && currentPenalty > 0) {
-            finalDelta += currentPenalty;
+        if (pendingTimeDeduction > 0) {
+            submitXPDelta(-pendingTimeDeduction);
+            setPendingTimeDeduction(0);
         }
-
-        if (finalDelta !== 0) {
-            submitXPDelta(finalDelta);
-        }
-        setPendingTimeDeduction(0);
     };
 
     const handleAnswerClick = (index: number) => {
@@ -271,11 +271,57 @@ export default function TestPage() {
                         </div>
                         <div className="flex-1">
                             <label className="label font-bold">Duration</label>
-                            <select className="select select-bordered w-full bg-base-200" value={duration} onChange={e => setDuration(Number(e.target.value))}>
+                            <select
+                                className="select select-bordered w-full bg-base-200 mb-2"
+                                value={durationMode === "custom" ? "custom" : duration}
+                                onChange={e => {
+                                    if (e.target.value === "custom") {
+                                        setDurationMode("custom");
+                                        setDuration(customMinutes * 60 + customSeconds);
+                                    } else {
+                                        setDurationMode("preset");
+                                        setDuration(Number(e.target.value));
+                                    }
+                                }}
+                            >
                                 <option value={60}>⏱️ 1 Minute (60s)</option>
                                 <option value={180}>⏱️ 3 Minutes (180s)</option>
                                 <option value={300}>⏱️ 5 Minutes (300s)</option>
+                                <option value="custom">⚙️ Custom...</option>
                             </select>
+
+                            {durationMode === "custom" && (
+                                <div className="flex gap-2 items-center">
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        max="60"
+                                        className="input input-bordered w-full bg-base-200"
+                                        value={customMinutes}
+                                        onChange={e => {
+                                            const m = Math.max(0, parseInt(e.target.value) || 0);
+                                            setCustomMinutes(m);
+                                            setDuration(m * 60 + customSeconds);
+                                        }}
+                                        placeholder="Min"
+                                    />
+                                    <span className="font-bold text-sm text-base-content/60">m</span>
+                                    <input
+                                        type="number"
+                                        min={customMinutes === 0 ? "30" : "0"}
+                                        max="59"
+                                        className="input input-bordered w-full bg-base-200"
+                                        value={customSeconds}
+                                        onChange={e => {
+                                            const s = Math.max(0, parseInt(e.target.value) || 0);
+                                            setCustomSeconds(s);
+                                            setDuration(customMinutes * 60 + s);
+                                        }}
+                                        placeholder="Sec"
+                                    />
+                                    <span className="font-bold text-sm text-base-content/60">s</span>
+                                </div>
+                            )}
                         </div>
                     </div>
 

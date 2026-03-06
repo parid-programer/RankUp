@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "RankUp — Prove Your Knowledge, Climb the Ranks",
+  title: "RankUp. Prove Your Knowledge, Climb the Ranks",
   description:
     "Take skill-based tests, earn points, and compete on a global leaderboard. Rise through seven tiers from Bronze to Grandmaster.",
 };
