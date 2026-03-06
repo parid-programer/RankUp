@@ -185,6 +185,7 @@ export const authOptions: NextAuthOptions = {
                 session.user.rank = token.rank as string;
                 session.user.xp = token.xp as number;
                 session.user.bio = token.bio as string;
+                session.user.image = token.image as string;
                 session.user.customStatus = token.customStatus as string;
                 session.user.presence = token.presence as string;
                 session.user.sessionVersion = token.sessionVersion as number;
