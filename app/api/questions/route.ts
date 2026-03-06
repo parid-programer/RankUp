@@ -34,7 +34,7 @@ export async function POST(req: Request) {
         }
 
         const targetSubject = subject && subject !== "General" ? subject : "General Knowledge";
-
+           
         const response = await openai.responses.parse({
             model: "gpt-5-nano", // or the required model
             input: [

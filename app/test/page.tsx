@@ -17,6 +17,7 @@ export default function TestPage() {
     const router = useRouter();
 
     const [loading, setLoading] = useState(false);
+    const [nextQuestionPromise, setNextQuestionPromise] = useState<Promise<any> | null>(null);
     const [question, setQuestion] = useState<Question | null>(null);
     const [difficulty, setDifficulty] = useState(1);
     const [score, setScore] = useState(0);
@@ -80,12 +81,34 @@ export default function TestPage() {
         }
     };
 
-    const handleNextQuestion = () => {
-        const nextDifficulty = feedback === "correct"
-            ? Math.min(10, difficulty + 1)
-            : Math.max(1, Math.floor(((sessionData?.user as any)?.xp || 0) / 1000) + 1);
-
-        fetchQuestion(nextDifficulty);
+    const handleNextQuestion = async () => {
+        if (nextQuestionPromise) {
+            setLoading(true);
+            setFeedback(null);
+            setSelectedAnswer(null);
+            try {
+                const data = await nextQuestionPromise;
+                if (data && data.question) {
+                    setQuestion(data);
+                } else {
+                    throw new Error("Invalid prefetch data");
+                }
+            } catch (err) {
+                console.error("Prefetch failed, falling back to load:", err);
+                const nextDifficulty = feedback === "correct"
+                    ? Math.min(10, difficulty + 1)
+                    : Math.max(1, difficulty - 1);
+                await fetchQuestion(nextDifficulty);
+            } finally {
+                setLoading(false);
+                setNextQuestionPromise(null);
+            }
+        } else {
+            const nextDifficulty = feedback === "correct"
+                ? Math.min(10, difficulty + 1)
+                : Math.max(1, difficulty - 1);
+            fetchQuestion(nextDifficulty);
+        }
     };
 
     const endTest = async () => {
@@ -99,12 +122,16 @@ export default function TestPage() {
         setSelectedAnswer(index);
         const isCorrect = index === question.correctAnswerIndex;
 
+        let nextDiff = difficulty;
+
         if (isCorrect) {
             setFeedback("correct");
             const pointsEarned = Math.round(10 * difficulty * (1 + streak * 0.1));
             setScore((prev) => prev + pointsEarned);
             setStreak((prev) => prev + 1);
-            setDifficulty((prev) => Math.min(10, prev + 1));
+
+            nextDiff = Math.min(10, difficulty + 1);
+            setDifficulty(nextDiff);
 
             submitXPDelta(pointsEarned);
         } else {
@@ -112,10 +139,23 @@ export default function TestPage() {
             const pointsLost = 10 * difficulty; // penalty
             setScore((prev) => prev - pointsLost); // Allow negative absolute score cascade
             setStreak(0);
-            setDifficulty((prev) => Math.max(1, prev - 1));
+
+            nextDiff = Math.max(1, difficulty - 1);
+            setDifficulty(nextDiff);
 
             submitXPDelta(-pointsLost);
         }
+
+        // Prefetch next question behind the scenes
+        const p = fetch("/api/questions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ difficulty: nextDiff, subject }),
+        }).then(res => {
+            if (!res.ok) throw new Error("Prefetch response not ok");
+            return res.json();
+        });
+        setNextQuestionPromise(p);
     };
 
     useEffect(() => {
