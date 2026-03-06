@@ -118,38 +118,50 @@ export default async function HomePage() {
                 </tr>
               </thead>
               <tbody>
-                {topUsers.map((p: any, index: number) => (
-                  <tr
-                    key={p._id.toString()}
-                    className="hover:bg-base-content/5 transition-colors"
-                  >
-                    <td>
-                      <RankBadge rank={index + 1} />
-                    </td>
-                    <td>
-                      <Link href={`/profile/${p._id.toString()}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-                        <div className="avatar placeholder">
-                          <div className="bg-primary/15 text-primary w-10 h-10 rounded-full text-sm font-bold overflow-hidden">
-                            {p.image ? (
-                              <img src={p.image.startsWith("data:") ? `/api/user/avatar/${p._id.toString()}` : p.image} referrerPolicy="no-referrer" className="object-cover w-full h-full" />
-                            ) : (
-                              <span>{p.name?.[0]?.toUpperCase() || "U"}</span>
-                            )}
-                          </div>
-                        </div>
-                        <span className="font-semibold hover:underline text-primary">{p.name}</span>
-                      </Link>
-                    </td>
-                    <td>
-                      <span className="badge badge-sm badge-ghost">
-                        {p.rank || "Bronze"}
-                      </span>
-                    </td>
-                    <td className="text-right font-mono font-bold text-primary">
-                      {p.xp.toLocaleString()}
+                {topUsers.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="text-center py-16">
+                      <div className="flex flex-col items-center gap-3 opacity-70">
+                        <span className="text-5xl animate-pulse">🦗</span>
+                        <p className="font-bold text-xl">Well, this is awkward...</p>
+                        <p className="text-sm">There are literally zero players here.<br />Be the very first to join and claim the Rank 1 spot! 👑</p>
+                      </div>
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  topUsers.map((p: any, index: number) => (
+                    <tr
+                      key={p._id.toString()}
+                      className="hover:bg-base-content/5 transition-colors"
+                    >
+                      <td>
+                        <RankBadge rank={index + 1} />
+                      </td>
+                      <td>
+                        <Link href={`/profile/${p._id.toString()}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                          <div className="avatar placeholder">
+                            <div className="bg-primary/15 text-primary w-10 h-10 rounded-full text-sm font-bold overflow-hidden">
+                              {p.image ? (
+                                <img src={p.image.startsWith("data:") ? `/api/user/avatar/${p._id.toString()}` : p.image} referrerPolicy="no-referrer" className="object-cover w-full h-full" />
+                              ) : (
+                                <span>{p.name?.[0]?.toUpperCase() || "U"}</span>
+                              )}
+                            </div>
+                          </div>
+                          <span className="font-semibold hover:underline text-primary">{p.name}</span>
+                        </Link>
+                      </td>
+                      <td>
+                        <span className="badge badge-sm badge-ghost">
+                          {p.rank || "Bronze"}
+                        </span>
+                      </td>
+                      <td className="text-right font-mono font-bold text-primary">
+                        {p.xp.toLocaleString()}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

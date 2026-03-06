@@ -165,10 +165,13 @@ export default async function LeaderboardPage({ searchParams }: { searchParams: 
 
                             {topUsers.length === 0 && (
                                 <tr>
-                                    <td colSpan={5} className="text-center py-20">
-                                        <p className="text-base-content/50">
-                                            No players yet. Be the first to take a test!
-                                        </p>
+                                    <td colSpan={5} className="text-center py-24">
+                                        <div className="flex flex-col items-center gap-3 opacity-70">
+                                            <span className="text-5xl animate-bounce">🏜️</span>
+                                            <p className="font-bold text-2xl">Whoops! A tumbleweed just rolled by...</p>
+                                            <p className="text-lg max-w-md">There are absolutely zero users on this platform right now. Take a test now and you're mathematically guaranteed to be #1! 🥇</p>
+                                            <Link href="/test" className="btn btn-primary mt-4 pulse-glow">Claim The Throne</Link>
+                                        </div>
                                     </td>
                                 </tr>
                             )}
