@@ -21,6 +21,10 @@ export default function TestPage() {
     const [question, setQuestion] = useState<Question | null>(null);
     const [difficulty, setDifficulty] = useState(1);
     const [score, setScore] = useState(0);
+    const [pendingTimeDeduction, setPendingTimeDeduction] = useState(0);
+    const [currentPenalty, setCurrentPenalty] = useState(0);
+    const timeDeductionRate = Number(process.env.NEXT_PUBLIC_TIME_DEDUCTION_RATE || "1");
+
     const [streak, setStreak] = useState(0);
     const [timeLeft, setTimeLeft] = useState(60);
     const [duration, setDuration] = useState(60);
@@ -46,7 +50,14 @@ export default function TestPage() {
                 body: JSON.stringify({ difficulty: currentDifficulty, subject }),
             });
             const data = await res.json();
-            if (res.ok) setQuestion(data);
+            if (res.ok) {
+                setQuestion(data);
+                const penalty = 10 * currentDifficulty;
+                setCurrentPenalty(penalty);
+                setScore((prev) => prev - penalty);
+                submitXPDelta(-penalty);
+                setPendingTimeDeduction(0);
+            }
             else console.error(data.error);
         } catch (err) {
             console.error(err);
@@ -75,6 +86,8 @@ export default function TestPage() {
         setDifficulty(startingLevel);
         setTimeLeft(duration);
         setStreak(0);
+        setPendingTimeDeduction(0);
+        setCurrentPenalty(0);
         await fetchQuestion(startingLevel);
     };
 
@@ -100,6 +113,11 @@ export default function TestPage() {
                 const data = await nextQuestionPromise;
                 if (data && data.question) {
                     setQuestion(data);
+                    const penalty = 10 * difficulty;
+                    setCurrentPenalty(penalty);
+                    setScore((prev) => prev - penalty);
+                    submitXPDelta(-penalty);
+                    setPendingTimeDeduction(0);
                 } else {
                     throw new Error("Invalid prefetch data");
                 }
@@ -124,6 +142,10 @@ export default function TestPage() {
     const endTest = async () => {
         setIsTestActive(false);
         setQuestion(null);
+        if (pendingTimeDeduction > 0) {
+            submitXPDelta(-pendingTimeDeduction);
+            setPendingTimeDeduction(0);
+        }
     };
 
     const handleAnswerClick = (index: number) => {
@@ -137,23 +159,24 @@ export default function TestPage() {
         if (isCorrect) {
             setFeedback("correct");
             const pointsEarned = Math.round(10 * difficulty * (1 + streak * 0.1));
-            setScore((prev) => prev + pointsEarned);
+            const netPoints = currentPenalty + pointsEarned - pendingTimeDeduction;
+
+            setScore((prev) => prev + currentPenalty + pointsEarned);
             setStreak((prev) => prev + 1);
 
             nextDiff = Math.min(10, difficulty + 1);
             setDifficulty(nextDiff);
 
-            submitXPDelta(pointsEarned);
+            submitXPDelta(netPoints);
         } else {
             setFeedback("incorrect");
-            const pointsLost = 10 * difficulty; // penalty
-            setScore((prev) => prev - pointsLost); // Allow negative absolute score cascade
+            // Penalty was paid immediately entirely upfront!
             setStreak(0);
 
             nextDiff = Math.max(1, difficulty - 1);
             setDifficulty(nextDiff);
 
-            submitXPDelta(-pointsLost);
+            submitXPDelta(-pendingTimeDeduction);
         }
 
         // Prefetch next question behind the scenes
@@ -168,15 +191,23 @@ export default function TestPage() {
         setNextQuestionPromise(p);
     };
 
+    const isQuestionLoaded = !!question;
+
     useEffect(() => {
         let timer: NodeJS.Timeout;
         if (isTestActive && timeLeft > 0 && !feedback && !loading) {
-            timer = setInterval(() => setTimeLeft((prev) => prev - 1), 1000);
-        } else if (timeLeft === 0 && isTestActive) {
+            timer = setInterval(() => {
+                setTimeLeft((prev) => prev - 1);
+                if (timeDeductionRate > 0 && isQuestionLoaded) {
+                    setScore((prev) => prev - timeDeductionRate);
+                    setPendingTimeDeduction((prev) => prev + timeDeductionRate);
+                }
+            }, 1000);
+        } else if (timeLeft <= 0 && isTestActive) {
             endTest();
         }
         return () => clearInterval(timer);
-    }, [isTestActive, timeLeft, feedback, endTest]);
+    }, [isTestActive, timeLeft, feedback, loading, isQuestionLoaded, timeDeductionRate, endTest]);
 
     if (status === "loading") {
         return (
