@@ -23,7 +23,6 @@ export default function ShareProfileButton({ userId }: { userId: string }) {
 
 
 
-
     if (!origin) return null;
 
     return (

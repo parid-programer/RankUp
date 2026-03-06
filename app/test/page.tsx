@@ -55,17 +55,27 @@ export default function TestPage() {
         }
     };
 
-    const startTest = () => {
-        // Compute base difficulty dynamically from the user's Total XP (fallback to 0) Max 10.
-        const baseXP = (sessionData?.user as any)?.xp || 0;
+    const startTest = async () => {
+        setLoading(true);
+        setIsTestActive(true);
+
+        // Compute base difficulty dynamically from the user's specific Subject XP (fallback to 0) Max 10.
+        let baseXP = 0;
+        try {
+            const res = await fetch(`/api/user/xp?subject=${encodeURIComponent(subject)}`);
+            if (res.ok) {
+                const data = await res.json();
+                baseXP = data.xp || 0;
+            }
+        } catch (e) { console.error("Failed to fetch subject XP", e) }
+
         const startingLevel = Math.max(1, Math.min(10, Math.floor(baseXP / 1000) + 1));
 
-        setIsTestActive(true);
         setScore(0);
         setDifficulty(startingLevel);
         setTimeLeft(duration);
         setStreak(0);
-        fetchQuestion(startingLevel);
+        await fetchQuestion(startingLevel);
     };
 
     const submitXPDelta = async (delta: number) => {

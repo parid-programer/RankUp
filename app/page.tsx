@@ -11,15 +11,10 @@ import {
   UserGroupIcon,
   ClockIcon,
 } from "./icons";
+import dbConnect from "@/lib/mongodb";
+import User from "@/models/User";
 
 /* ───────── mock data ───────── */
-const leaderboard = [
-  { rank: 1, name: "Alex Storm", score: 9850, badge: "Grandmaster", avatar: "AS" },
-  { rank: 2, name: "Maya Lin", score: 9420, badge: "Grandmaster", avatar: "ML" },
-  { rank: 3, name: "Jake Torres", score: 9100, badge: "Master", avatar: "JT" },
-  { rank: 4, name: "Priya Patel", score: 8750, badge: "Master", avatar: "PP" },
-  { rank: 5, name: "Leo Zhang", score: 8300, badge: "Master", avatar: "LZ" },
-];
 
 const ranks = [
   { name: "Bronze", minScore: 0, color: "from-amber-700 to-amber-900", icon: "🥉", glow: "shadow-amber-700/30" },
@@ -42,7 +37,14 @@ const stats = [
 // An app that will test a user and assign a score to them. There will be a leaderboard and a gamified system of ranks. Integrate tailwindcss and daisyui for styling. Make a /test page where the actual test is held. Use the chatgpt api to make questions. Depending on how many questions you get right, the next questions will be harder. If you get a question wrong, you lose points. If you get a question right, you gain points. Make a time limit. Integrate MongoDB to keep track of user scores and ranks and auth. Make a login page with JWT authentication and google and facebook authentication. Give it an about page, say stuff like its used all around the world, give it a reviews section and a contact me page which send emails to my email address. Make it look good. Give it a logo. 
 
 /* ───────── page ───────── */
-export default function HomePage() {
+export default async function HomePage() {
+  await dbConnect();
+  const topUsers = await User.find({ xp: { $gt: 0 } })
+    .sort({ xp: -1 })
+    .limit(5)
+    .select("name image rank xp")
+    .lean();
+
   return (
     <div className="min-h-screen bg-base-100 overflow-x-hidden">
       {/* ─── Hero ─── */}
@@ -99,7 +101,7 @@ export default function HomePage() {
       <section id="leaderboard" className="max-w-5xl mx-auto px-6 mb-20">
         <div className="flex items-center gap-3 mb-8">
           <TrophyIcon className="h-7 w-7 text-warning" />
-          <h2 className="text-3xl font-bold">Leaderboard</h2>
+          <Link href="/leaderboard" className="text-3xl font-bold hover:underline hover:text-primary transition-colors">Leaderboard</Link>
         </div>
 
         <div className="glass-card rounded-2xl overflow-hidden">
@@ -114,31 +116,31 @@ export default function HomePage() {
                 </tr>
               </thead>
               <tbody>
-                {leaderboard.map((p) => (
+                {topUsers.map((p: any, index: number) => (
                   <tr
-                    key={p.rank}
+                    key={p._id.toString()}
                     className="hover:bg-base-content/5 transition-colors"
                   >
                     <td>
-                      <RankBadge rank={p.rank} />
+                      <RankBadge rank={index + 1} />
                     </td>
                     <td>
-                      <div className="flex items-center gap-3">
+                      <Link href={`/profile/${p._id.toString()}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
                         <div className="avatar placeholder">
-                          <div className="bg-primary/15 text-primary w-10 rounded-full text-sm font-bold">
-                            <span>{p.avatar}</span>
+                          <div className="bg-primary/15 text-primary w-10 rounded-full text-sm font-bold overflow-hidden">
+                            {p.image ? <img src={p.image} referrerPolicy="no-referrer" /> : <span>{p.name?.[0]?.toUpperCase() || "U"}</span>}
                           </div>
                         </div>
-                        <span className="font-semibold">{p.name}</span>
-                      </div>
+                        <span className="font-semibold hover:underline text-primary">{p.name}</span>
+                      </Link>
                     </td>
                     <td>
                       <span className="badge badge-sm badge-ghost">
-                        {p.badge}
+                        {p.rank || "Bronze"}
                       </span>
                     </td>
                     <td className="text-right font-mono font-bold text-primary">
-                      {p.score.toLocaleString()}
+                      {p.xp.toLocaleString()}
                     </td>
                   </tr>
                 ))}

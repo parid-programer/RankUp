@@ -171,6 +171,7 @@ export default function CommentSection({ targetType, targetId }: { targetType: "
                         </div>
                     )}
                     <textarea
+                        id="comment-input"
                         className="textarea textarea-bordered w-full resize-none bg-base-200"
                         placeholder="Leave a comment..."
                         value={newCommentContent}
@@ -194,7 +195,12 @@ export default function CommentSection({ targetType, targetId }: { targetType: "
             ) : (
                 <div className="flex flex-col gap-6">
                     {rootComments.map(root => (
-                        <CommentNode key={root._id} comment={root} allComments={comments} onReply={(parentId) => { setReplyingTo(parentId); window.scrollTo({ top: 0, behavior: "smooth" }); }} />
+                        <CommentNode key={root._id} comment={root} allComments={comments} onReply={(parentId) => {
+                            setReplyingTo(parentId);
+                            setTimeout(() => {
+                                document.getElementById("comment-input")?.scrollIntoView({ behavior: "smooth", block: "center" });
+                            }, 50);
+                        }} />
                     ))}
                 </div>
             )}

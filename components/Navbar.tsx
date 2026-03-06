@@ -18,6 +18,20 @@ export default function Navbar() {
                 </Link>
             </div>
             <div className="flex-none gap-3">
+                <div className="dropdown dropdown-end md:hidden">
+                    <div tabIndex={0} role="button" className="btn btn-ghost btn-circle">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-base-content" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h7" />
+                        </svg>
+                    </div>
+                    <ul tabIndex={0} className="menu menu-sm dropdown-content bg-base-200 rounded-box z-[1] mt-3 w-52 p-2 shadow border border-base-content/10">
+                        <li><Link href="/daily">Daily Challenge</Link></li>
+                        <li><Link href="/archive">Archive</Link></li>
+                        <li><Link href="/leaderboard">Leaderboard</Link></li>
+                        <li><Link href="/about">About</Link></li>
+                    </ul>
+                </div>
+
                 <Link href="/daily" className="btn btn-primary btn-sm hidden md:inline-flex text-primary-content tracking-wide shadow-sm pulse-glow">
                     Daily Challenge
                 </Link>
