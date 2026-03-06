@@ -67,6 +67,19 @@ export default function TestPage() {
         fetchQuestion(startingLevel);
     };
 
+    const submitXPDelta = async (delta: number) => {
+        if (delta === 0) return;
+        try {
+            await fetch("/api/test/submit", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ xpChange: delta, subject }),
+            });
+        } catch (e) {
+            console.error("Failed to submit delta", e);
+        }
+    };
+
     const handleNextQuestion = () => {
         const nextDifficulty = feedback === "correct"
             ? Math.min(10, difficulty + 1)
@@ -78,19 +91,6 @@ export default function TestPage() {
     const endTest = async () => {
         setIsTestActive(false);
         setQuestion(null);
-
-        // Submit score (both positive OR negative allowing demotions)
-        if (score !== 0) {
-            try {
-                await fetch("/api/test/submit", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ xpChange: score, subject }),
-                });
-            } catch (e) {
-                console.error("Failed to submit score", e);
-            }
-        }
     };
 
     const handleAnswerClick = (index: number) => {
@@ -101,16 +101,20 @@ export default function TestPage() {
 
         if (isCorrect) {
             setFeedback("correct");
-            const pointsEarned = 10 * difficulty * (1 + streak * 0.1);
-            setScore((prev) => prev + Math.round(pointsEarned));
+            const pointsEarned = Math.round(10 * difficulty * (1 + streak * 0.1));
+            setScore((prev) => prev + pointsEarned);
             setStreak((prev) => prev + 1);
             setDifficulty((prev) => Math.min(10, prev + 1));
+
+            submitXPDelta(pointsEarned);
         } else {
             setFeedback("incorrect");
             const pointsLost = 10 * difficulty; // penalty
             setScore((prev) => prev - pointsLost); // Allow negative absolute score cascade
             setStreak(0);
             setDifficulty((prev) => Math.max(1, prev - 1));
+
+            submitXPDelta(-pointsLost);
         }
     };
 
