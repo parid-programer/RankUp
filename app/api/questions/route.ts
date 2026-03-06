@@ -44,15 +44,8 @@ export async function POST(req: Request) {
 The user is currently at difficulty level ${difficulty} out of 10. 
 The required subject for this question is: ${targetSubject}.
 Generate a ${targetSubject} question appropriate for this difficulty. 
-Level 1 should be fundamental. Level 10 should be highly specific, expert-level trivia or complex problem-solving.
-
-Respond ONLY with a valid JSON object matching this schema:
-{
-"question": "The question text",
-"options": ["Option A", "Option B", "Option C", "Option D"],
-"correctAnswerIndex": <0-3>,
-"explanation": "Brief explanation of why the answer is correct."
-}`,
+Level 1 should be fundamental. Level 10 should be highly specific, expert-level trivia or complex problem-solving. The questions should be only in English (excluding Proper Nouns, Names of people, places, theorems or organizations which may be borrowed from other languages)
+`,
                 },
             ],
             text: {
