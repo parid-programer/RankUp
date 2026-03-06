@@ -1,6 +1,7 @@
 import { TrophyIcon, BoltIcon } from "@/app/icons";
 import dbConnect from "@/lib/mongodb";
 import User from "@/models/User";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -104,8 +105,8 @@ export default async function LeaderboardPage({ searchParams }: { searchParams: 
                                             </div>
                                         </td>
                                         <td>
-                                            <div className="flex items-center gap-4">
-                                                <div className="avatar placeholder">
+                                            <Link href={`/profile/${user._id.toString()}`} className="flex items-center gap-4 hover:border-b-transparent group">
+                                                <div className="avatar placeholder transition-transform group-hover:scale-105">
                                                     <div
                                                         className={`w-10 md:w-12 rounded-full ${isTop3
                                                             ? "ring ring-primary ring-offset-base-100 ring-offset-2"
@@ -122,7 +123,7 @@ export default async function LeaderboardPage({ searchParams }: { searchParams: 
                                                     </div>
                                                 </div>
                                                 <div>
-                                                    <p className={`font-bold ${isTop3 ? "text-lg" : ""}`}>
+                                                    <p className={`font-bold transition-colors group-hover:text-primary ${isTop3 ? "text-lg" : ""}`}>
                                                         {user.name}
                                                     </p>
                                                     {isTop3 && (
@@ -131,7 +132,7 @@ export default async function LeaderboardPage({ searchParams }: { searchParams: 
                                                         </span>
                                                     )}
                                                 </div>
-                                            </div>
+                                            </Link>
                                         </td>
                                         <td>
                                             <span

@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import CommentSection from "@/components/CommentSection";
+import ShareProfileButton from "@/components/ShareProfileButton";
 import dbConnect from "@/lib/mongodb";
 import User from "@/models/User";
 import { redirect } from "next/navigation";
@@ -50,9 +51,11 @@ export default async function ProfilePage() {
                     {session.user.bio && (
                         <p className="max-w-lg mx-auto text-base-content/80 text-lg leading-relaxed">{session.user.bio}</p>
                     )}
+
+                    <ShareProfileButton userId={session.user.id} />
                 </div>
 
-                <div className="stats shadow bg-base-200/50 w-full mt-4">
+                <div className="stats shadow bg-base-200/50 w-full mt-6">
                     <div className="stat place-items-center">
                         <div className="stat-title text-base-content/50">Current Rank</div>
                         <div className="stat-value text-primary text-2xl">{dbUser?.rank || "Bronze"}</div>

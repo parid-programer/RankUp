@@ -57,7 +57,11 @@ Respond ONLY with a valid JSON object matching this schema:
             ],
             text: {
                 format: zodTextFormat(questionSchema, "question"), 
-            }
+                "verbosity": "medium"
+            },
+            reasoning:{
+                "effort": "minimal"
+            },
     });
         const questionData = response.output_parsed;
 

@@ -70,7 +70,7 @@ export default function TestPage() {
     const handleNextQuestion = () => {
         const nextDifficulty = feedback === "correct"
             ? Math.min(10, difficulty + 1)
-            : Math.max(1, Math.min(10, Math.floor(((sessionData?.user as any)?.xp || 0) / 1000) + 1));
+            : Math.max(1, Math.floor(((sessionData?.user as any)?.xp || 0) / 1000) + 1);
 
         fetchQuestion(nextDifficulty);
     };
